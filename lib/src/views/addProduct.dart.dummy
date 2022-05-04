@@ -1,0 +1,1037 @@
+// import 'dart:convert';
+// import 'dart:io';
+// import 'package:another_flushbar/flushbar.dart';
+// import 'package:flutter_image_compress/flutter_image_compress.dart';
+// import 'package:fluttertoast/fluttertoast.dart';
+// import 'package:flutter/cupertino.dart';
+// import 'package:flutter/material.dart';
+// import 'package:flutter/services.dart';
+// import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
+// import 'package:http/http.dart' as http;
+// import 'package:image_picker/image_picker.dart';
+// import 'package:path_provider/path_provider.dart';
+// import 'package:async/async.dart';
+// import 'package:vendue_vendor/src/global/global.dart';
+// import 'package:vendue_vendor/src/helper/sizeConfig.dart';
+// import 'package:vendue_vendor/src/models/category_model.dart';
+// import 'package:vendue_vendor/src/models/product_model.dart';
+// import 'package:vendue_vendor/src/views/tabbar.dart';
+
+// // ignore: must_be_immutable
+// class AddProduct extends StatefulWidget {
+//   Function refresh;
+
+//   AddProduct({this.refresh});
+//   @override
+//   _AddProductState createState() => new _AddProductState();
+// }
+
+// class _AddProductState extends State<AddProduct> {
+//   double _height, _width;
+//   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
+
+//   String _categoryValue;
+//   String categoryName;
+//   CateModel catModel;
+
+//   String _storeValue;
+//   String storeName;
+//   ProductModel storModel;
+//   bool loadSubCat = false;
+
+//   bool isLoading = false;
+//   bool isOverlay = false;
+
+//   final _nameController = TextEditingController();
+//   final _decController = TextEditingController();
+//   final _priceController = TextEditingController();
+//   final _durationController = TextEditingController();
+
+//   File _image;
+//   final picker = ImagePicker();
+
+//   Future getImageFromGallery() async {
+//     final pickedFile = await picker.getImage(source: ImageSource.gallery);
+
+//     setState(() {
+//       if (pickedFile != null) {
+//         _image = File(pickedFile.path);
+//       } else {
+//         print('No image selected.');
+//       }
+//     });
+//   }
+
+//   String priceUnit;
+//   var priceUnit2 = [
+//     "Hourly",
+//     "Fixed",
+//   ];
+
+//   @override
+//   void initState() {
+//     _getStore();
+//     _getCategory();
+
+//     super.initState();
+//   }
+
+//   _getCategory() async {
+//     setState(() {
+//       isLoading = true;
+//     });
+
+//     var uri = Uri.parse('${baseUrl()}/get_all_cat');
+//     var request = new http.MultipartRequest("GET", uri);
+//     Map<String, String> headers = {
+//       "Accept": "application/json",
+//     };
+//     request.headers.addAll(headers);
+//     // request.fields['user_id'] = userID;
+//     var response = await request.send();
+//     print(response.statusCode);
+//     String responseData = await response.stream.transform(utf8.decoder).join();
+//     var userData = json.decode(responseData);
+//     catModel = CateModel.fromJson(userData);
+
+//     print(responseData);
+
+//     if (mounted) {
+//       setState(() {
+//         isLoading = false;
+//       });
+//     }
+//   }
+
+//   _getStore() async {
+//     var uri = Uri.parse('${baseUrl()}/get_v_res');
+//     var request = new http.MultipartRequest("POST", uri);
+//     Map<String, String> headers = {
+//       "Accept": "application/json",
+//     };
+//     request.headers.addAll(headers);
+//     request.fields.addAll({'vid': userID});
+//     // request.fields['user_id'] = userID;
+//     var response = await request.send();
+//     print(response.statusCode);
+//     String responseData = await response.stream.transform(utf8.decoder).join();
+//     var userData = json.decode(responseData);
+
+//     if (mounted)
+//       setState(() {
+//         storModel = ProductModel.fromJson(userData);
+//       });
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     _height = MediaQuery.of(context).size.height;
+//     _width = MediaQuery.of(context).size.width;
+//     SizeConfig().init(context);
+//     return Container(
+//       child: Scaffold(
+//           backgroundColor: Colors.white,
+//           key: _scaffoldKey,
+//           appBar: AppBar(
+//             elevation: 1,
+//             iconTheme: IconThemeData(
+//               color: Colors.black, //change your color here
+//             ),
+//             backgroundColor: appColorWhite,
+//             title: Text(
+//               "Add Service",
+//               style: TextStyle(
+//                 fontSize: 20,
+//                 color: Colors.black,
+//                 fontWeight: FontWeight.bold,
+//               ),
+//             ),
+//             centerTitle: true,
+//             actions: <Widget>[],
+//           ),
+//           body: Stack(
+//             fit: StackFit.expand,
+//             children: <Widget>[
+//               Container(
+//                 margin: EdgeInsets.only(bottom: 0),
+//                 // padding: EdgeInsets.only(bottom: 20),
+//                 child: CustomScrollView(
+//                   primary: true,
+//                   shrinkWrap: false,
+//                   slivers: <Widget>[
+//                     SliverToBoxAdapter(
+//                       child: isLoading
+//                           ? Container(
+//                               height: SizeConfig.screenHeight,
+//                               child: Center(
+//                                 child: CircularProgressIndicator(
+//                                   valueColor: AlwaysStoppedAnimation<Color>(
+//                                       appColorYellow),
+//                                 ),
+//                               ),
+//                             )
+//                           : Padding(
+//                               padding: const EdgeInsets.symmetric(
+//                                   horizontal: 20, vertical: 20),
+//                               child: Wrap(
+//                                 runSpacing: 8,
+//                                 children: [
+//                                   Column(
+//                                     children: [
+//                                       _productImages(),
+//                                       SizedBox(height: 20),
+//                                       _productTextField(),
+//                                       SizedBox(height: 20),
+//                                       _selectCat(),
+//                                       SizedBox(height: 20),
+//                                       _selectSubCat(),
+//                                       SizedBox(height: 20),
+//                                       _selectPriceUnit(),
+//                                       SizedBox(height: 20),
+//                                       _productDesTextField(),
+//                                       SizedBox(height: 20),
+//                                       Row(
+//                                         children: [
+//                                           Expanded(child: _priceField()),
+//                                           SizedBox(
+//                                             width: 10,
+//                                           ),
+//                                           Expanded(child: _salepriceField()),
+//                                         ],
+//                                       ),
+//                                       SizedBox(height: 20),
+//                                       _submit()
+//                                     ],
+//                                   ),
+//                                   SizedBox(
+//                                     height: 20,
+//                                   ),
+//                                 ],
+//                               ),
+//                             ),
+//                     ),
+//                   ],
+//                 ),
+//               ),
+//               isOverlay
+//                   ? Center(
+//                       child: Padding(
+//                       padding: const EdgeInsets.only(bottom: 0),
+//                       child: loader(context),
+//                     ))
+//                   : Container()
+//             ],
+//           )),
+//     );
+//   }
+
+//   Widget _submit() {
+//     return SizedBox(
+//         width: _width * 10 / 10,
+//         height: _height * 0.50 / 10,
+//         child: ElevatedButton(
+//           style: ElevatedButton.styleFrom(
+//             primary: appColorYellow,
+//           ),
+//           child: Text(
+//             'Submit',
+//             style: TextStyle(
+//                 fontWeight: FontWeight.bold, fontSize: _width * 0.35 / 10),
+//           ),
+//           onPressed: () {
+//             if (_image != null &&
+//                 _nameController.text.isNotEmpty &&
+//                 categoryName != null &&
+//                 storeName != null &&
+//                 _decController.text.isNotEmpty &&
+//                 _priceController.text.isNotEmpty &&
+//                 _durationController.text.isNotEmpty &&
+//                 priceUnit != null) {
+//               _apicall();
+//             } else {
+//               if (_image == null) {
+//                 Flushbar(
+//                   message: "Please select service image",
+//                   duration: Duration(seconds: 3),
+//                   icon: Icon(
+//                     Icons.error,
+//                     color: Colors.red,
+//                   ),
+//                 )..show(context);
+//               } else if (_nameController.text.isEmpty) {
+//                 Flushbar(
+//                   message: "Please enter service name",
+//                   duration: Duration(seconds: 3),
+//                   icon: Icon(
+//                     Icons.error,
+//                     color: Colors.red,
+//                   ),
+//                 )..show(context);
+//               } else if (categoryName == null) {
+//                 Flushbar(
+//                   message: "Please select service category",
+//                   duration: Duration(seconds: 3),
+//                   icon: Icon(
+//                     Icons.error,
+//                     color: Colors.red,
+//                   ),
+//                 )..show(context);
+//               } else if (storeName == null) {
+//                 Flushbar(
+//                   message: "Please select store",
+//                   duration: Duration(seconds: 3),
+//                   icon: Icon(
+//                     Icons.error,
+//                     color: Colors.red,
+//                   ),
+//                 )..show(context);
+//               } else if (_decController.text.isEmpty) {
+//                 Flushbar(
+//                   message: "Please enter service description",
+//                   duration: Duration(seconds: 3),
+//                   icon: Icon(
+//                     Icons.error,
+//                     color: Colors.red,
+//                   ),
+//                 )..show(context);
+//               } else if (_priceController.text.isEmpty) {
+//                 Flushbar(
+//                   message: "Please enter service price",
+//                   duration: Duration(seconds: 3),
+//                   icon: Icon(
+//                     Icons.error,
+//                     color: Colors.red,
+//                   ),
+//                 )..show(context);
+//               } else if (_durationController.text.isEmpty) {
+//                 Flushbar(
+//                   message: "Please enter service duration",
+//                   duration: Duration(seconds: 3),
+//                   icon: Icon(
+//                     Icons.error,
+//                     color: Colors.red,
+//                   ),
+//                 )..show(context);
+//               } else if (priceUnit == null) {
+//                 Flushbar(
+//                   message: "Please select price unit",
+//                   duration: Duration(seconds: 3),
+//                   icon: Icon(
+//                     Icons.error,
+//                     color: Colors.red,
+//                   ),
+//                 )..show(context);
+//               }
+//             }
+//           },
+//         ));
+//   }
+
+//   Widget _imagePicker(BuildContext context) {
+//     return Container(
+//         alignment: Alignment.centerLeft,
+//         height: 100,
+//         child: _image != null ? _imageWidget() : _dummyIMGList());
+//   }
+
+//   Widget _imageWidget() {
+//     return Stack(
+//       children: [
+//         Container(
+//           width: 100,
+//           height: 100,
+//           margin: EdgeInsets.symmetric(horizontal: 5),
+//           child: Image.file(
+//             _image,
+//             width: 300,
+//             height: 300,
+//             fit: BoxFit.cover,
+//           ),
+//         ),
+//         Positioned.fill(
+//             top: 5,
+//             right: 5,
+//             child: Align(
+//                 alignment: Alignment.topRight,
+//                 child: ClipOval(
+//                   child: Material(
+//                     color: appColorYellow, // button color
+//                     child: InkWell(
+//                       splashColor: Colors.red, // inkwell color
+//                       child: SizedBox(
+//                           width: 25,
+//                           height: 25,
+//                           child: Icon(
+//                             Icons.clear,
+//                             size: 15,
+//                             color: Colors.black,
+//                           )),
+//                       onTap: () {
+//                         setState(() {
+//                           _image = null;
+//                         });
+//                       },
+//                     ),
+//                   ),
+//                 )))
+//       ],
+//     );
+//   }
+
+//   Widget _dummyIMGList() {
+//     return AnimationLimiter(
+//       child: ListView.builder(
+//         scrollDirection: Axis.horizontal,
+//         itemCount: 1,
+//         itemBuilder: (BuildContext context, int index) {
+//           return AnimationConfiguration.staggeredList(
+//             position: index,
+//             duration: const Duration(milliseconds: 375),
+//             child: SlideAnimation(
+//               verticalOffset: 50.0,
+//               child: Container(
+//                 margin: EdgeInsets.symmetric(horizontal: 5),
+//                 child: InkWell(
+//                   onTap: getImageFromGallery,
+//                   child: new Container(
+//                     width: 100,
+//                     height: 300,
+//                     decoration: BoxDecoration(
+//                         color: Colors.grey[200],
+//                         borderRadius: BorderRadius.circular(8)),
+//                     child: Center(
+//                       child: Icon(
+//                         CupertinoIcons.photo_fill,
+//                         color: Colors.black45,
+//                         size: 40,
+//                       ),
+//                     ),
+//                   ),
+//                 ),
+//               ),
+//             ),
+//           );
+//         },
+//       ),
+//     );
+//   }
+
+//   Widget _productImages() {
+//     return Column(
+//       crossAxisAlignment: CrossAxisAlignment.start,
+//       children: [
+//         RichText(
+//           text: TextSpan(
+//             text: 'Service Image',
+//             style: TextStyle(
+//                 color: Colors.grey[800],
+//                 // fontWeight: FontWeight.w700,
+//                 fontStyle: FontStyle.normal,
+//                 fontSize: SizeConfig.blockSizeHorizontal * 3.8,
+//                 fontFamily: fontFamily),
+//             children: <TextSpan>[
+//               TextSpan(
+//                   text: ' *',
+//                   style: TextStyle(
+//                       fontWeight: FontWeight.bold, color: Colors.red)),
+//             ],
+//           ),
+//         ),
+//         // Container(
+//         //   height: 55,
+//         //   child: TextField(
+//         //     decoration: inputDecoration2,
+//         //   ),
+//         // ),
+//         SizedBox(
+//           height: 10,
+//         ),
+//         _imagePicker(context),
+//       ],
+//     );
+//   }
+
+//   Widget _productTextField() {
+//     return Column(
+//       crossAxisAlignment: CrossAxisAlignment.start,
+//       children: [
+//         RichText(
+//           text: TextSpan(
+//             text: 'Service Name',
+//             style: TextStyle(
+//                 color: Colors.grey[800],
+//                 fontFamily: fontFamily,
+//                 fontStyle: FontStyle.normal,
+//                 fontSize: SizeConfig.blockSizeHorizontal * 4),
+//             children: <TextSpan>[
+//               TextSpan(
+//                   text: ' *',
+//                   style: TextStyle(
+//                       fontWeight: FontWeight.bold, color: Colors.red)),
+//             ],
+//           ),
+//         ),
+//         // Container(
+//         //   height: 55,
+//         //   child: TextField(
+//         //     decoration: inputDecoration2,
+//         //   ),
+//         // ),
+//         SizedBox(
+//           height: 10,
+//         ),
+//         Container(
+//           height: SizeConfig.blockSizeVertical * 6,
+//           child: CupertinoTextField(
+//             controller: _nameController,
+//             padding: EdgeInsets.only(left: 20),
+//             placeholder: 'Enter name',
+//             placeholderStyle: TextStyle(fontSize: 14, color: Colors.grey[600]),
+//             style: TextStyle(
+//               fontSize: 15,
+//               color: Colors.black,
+//               fontFamily: fontFamily,
+//             ),
+//             textAlign: TextAlign.start,
+
+//             //maxLines: 2,
+//           ),
+//         ),
+//       ],
+//     );
+//   }
+
+//   Widget _selectCat() {
+//     return Column(
+//       crossAxisAlignment: CrossAxisAlignment.start,
+//       children: [
+//         RichText(
+//           text: TextSpan(
+//             text: 'Select Category',
+//             style: TextStyle(
+//                 color: Colors.grey[800],
+//                 fontFamily: fontFamily,
+//                 fontStyle: FontStyle.normal,
+//                 fontSize: SizeConfig.blockSizeHorizontal * 4),
+//             children: <TextSpan>[
+//               TextSpan(
+//                   text: ' *',
+//                   style: TextStyle(
+//                       fontWeight: FontWeight.bold, color: Colors.red)),
+//             ],
+//           ),
+//         ),
+//         // Container(
+//         //   height: 55,
+//         //   child: TextField(
+//         //     decoration: inputDecoration2,
+//         //   ),
+//         // ),
+//         SizedBox(
+//           height: 10,
+//         ),
+//         SizedBox(
+//           height: SizeConfig.blockSizeVertical * 6,
+//           child: FormField<String>(
+//             builder: (FormFieldState<String> state) {
+//               return InputDecorator(
+//                 decoration: InputDecoration(
+//                   contentPadding: EdgeInsets.only(left: 15, right: 15),
+//                   fillColor: Colors.white,
+//                   filled: true,
+//                   errorStyle:
+//                       TextStyle(color: Colors.redAccent, fontSize: 16.0),
+//                   // hintText: 'Please select Engine Capacity',
+//                   enabledBorder: OutlineInputBorder(
+//                       borderSide: BorderSide(color: Colors.black45, width: 0.3),
+//                       borderRadius: BorderRadius.circular(
+//                         5.0,
+//                       )),
+//                   focusedBorder: OutlineInputBorder(
+//                       borderSide: BorderSide(color: Colors.black45, width: 0.3),
+//                       borderRadius: BorderRadius.circular(
+//                         5.0,
+//                       )),
+//                 ),
+//                 isEmpty: _categoryValue == '',
+//                 child: DropdownButtonHideUnderline(
+//                   child: DropdownButton<String>(
+//                     value: _categoryValue,
+//                     isDense: true,
+//                     hint: Text(
+//                       "Please select category*",
+//                       style: TextStyle(
+//                         color: Colors.black45,
+//                         fontFamily: fontFamily,
+//                       ),
+//                     ),
+//                     style: TextStyle(
+//                       color: Colors.black,
+//                     ),
+//                     onChanged: (String newValue) {
+//                       setState(() {
+//                         categoryName = newValue;
+//                         _categoryValue = newValue;
+//                         state.didChange(newValue);
+//                       });
+//                     },
+//                     items: catModel.categories.map((item) {
+//                       return new DropdownMenuItem(
+//                           child: new Text(
+//                             item.cName,
+//                             style:
+//                                 TextStyle(fontSize: 15, fontFamily: fontFamily),
+//                           ),
+//                           value: item.id.toString());
+//                     }).toList(),
+//                   ),
+//                 ),
+//               );
+//             },
+//           ),
+//         )
+//       ],
+//     );
+//   }
+
+//   Widget _selectSubCat() {
+//     return loadSubCat == true
+//         ? Center(child: CupertinoActivityIndicator())
+//         : Column(
+//             crossAxisAlignment: CrossAxisAlignment.start,
+//             children: [
+//               RichText(
+//                 text: TextSpan(
+//                   text: 'Select Store',
+//                   style: TextStyle(
+//                       color: Colors.grey[800],
+//                       fontFamily: fontFamily,
+//                       fontStyle: FontStyle.normal,
+//                       fontSize: SizeConfig.blockSizeHorizontal * 4),
+//                   children: <TextSpan>[
+//                     TextSpan(
+//                         text: ' *',
+//                         style: TextStyle(
+//                             fontWeight: FontWeight.bold, color: Colors.red)),
+//                   ],
+//                 ),
+//               ),
+//               SizedBox(
+//                 height: 10,
+//               ),
+//               SizedBox(
+//                 height: SizeConfig.blockSizeVertical * 6,
+//                 child: FormField<String>(
+//                   builder: (FormFieldState<String> state) {
+//                     return InputDecorator(
+//                       decoration: InputDecoration(
+//                         contentPadding: EdgeInsets.only(left: 15, right: 15),
+//                         fillColor: Colors.white,
+//                         filled: true,
+//                         errorStyle:
+//                             TextStyle(color: Colors.redAccent, fontSize: 16.0),
+//                         enabledBorder: OutlineInputBorder(
+//                             borderSide:
+//                                 BorderSide(color: Colors.black45, width: 0.3),
+//                             borderRadius: BorderRadius.circular(
+//                               5.0,
+//                             )),
+//                         focusedBorder: OutlineInputBorder(
+//                             borderSide:
+//                                 BorderSide(color: Colors.black45, width: 0.3),
+//                             borderRadius: BorderRadius.circular(
+//                               5.0,
+//                             )),
+//                       ),
+//                       isEmpty: _storeValue == '',
+//                       child: DropdownButtonHideUnderline(
+//                         child: DropdownButton<String>(
+//                           value: _storeValue,
+//                           isDense: true,
+//                           hint: Text(
+//                             "Please select store*",
+//                             style: TextStyle(
+//                               color: Colors.black45,
+//                               fontFamily: fontFamily,
+//                             ),
+//                           ),
+//                           style: TextStyle(
+//                             color: Colors.black,
+//                           ),
+//                           onChanged: (String newValue) {
+//                             setState(() {
+//                               storeName = newValue;
+//                               _storeValue = newValue;
+//                               state.didChange(newValue);
+//                             });
+//                           },
+//                           items: storModel != null
+//                               ? storModel.status == 0
+//                                   ? []
+//                                   : storModel.restaurants.map((item) {
+//                                       return new DropdownMenuItem(
+//                                           child: new Text(
+//                                             item.resName,
+//                                             style: TextStyle(
+//                                                 fontSize: 15,
+//                                                 fontFamily: fontFamily),
+//                                           ),
+//                                           value: item.resId.toString());
+//                                     }).toList()
+//                               : [],
+//                         ),
+//                       ),
+//                     );
+//                   },
+//                 ),
+//               )
+//             ],
+//           );
+//   }
+
+//   Widget _selectPriceUnit() {
+//     return loadSubCat == true
+//         ? Center(child: CupertinoActivityIndicator())
+//         : Column(
+//             crossAxisAlignment: CrossAxisAlignment.start,
+//             children: [
+//               RichText(
+//                 text: TextSpan(
+//                   text: 'Price Unit',
+//                   style: TextStyle(
+//                       color: Colors.grey[800],
+//                       fontFamily: fontFamily,
+//                       fontStyle: FontStyle.normal,
+//                       fontSize: SizeConfig.blockSizeHorizontal * 4),
+//                   children: <TextSpan>[
+//                     TextSpan(
+//                         text: ' *',
+//                         style: TextStyle(
+//                             fontWeight: FontWeight.bold, color: Colors.red)),
+//                   ],
+//                 ),
+//               ),
+//               SizedBox(
+//                 height: 10,
+//               ),
+//               SizedBox(
+//                 height: SizeConfig.blockSizeVertical * 6,
+//                 child: FormField<String>(
+//                   builder: (FormFieldState<String> state) {
+//                     return Container(
+//                       child: Stack(
+//                         children: <Widget>[
+//                           Container(
+//                             // height: 55,
+//                             color: Colors.white,
+//                             child: InputDecorator(
+//                               decoration: InputDecoration(
+//                                 contentPadding:
+//                                     EdgeInsets.only(left: 15, right: 15),
+//                                 fillColor: Colors.white,
+//                                 filled: true,
+//                                 errorStyle: TextStyle(
+//                                     color: Colors.redAccent, fontSize: 16.0),
+//                                 enabledBorder: OutlineInputBorder(
+//                                     borderSide: BorderSide(
+//                                         color: Colors.black45, width: 0.3),
+//                                     borderRadius: BorderRadius.circular(
+//                                       5.0,
+//                                     )),
+//                                 focusedBorder: OutlineInputBorder(
+//                                     borderSide: BorderSide(
+//                                         color: Colors.black45, width: 0.3),
+//                                     borderRadius: BorderRadius.circular(
+//                                       5.0,
+//                                     )),
+//                               ),
+//                               child: DropdownButtonHideUnderline(
+//                                 child: DropdownButton(
+//                                   value: priceUnit,
+//                                   isDense: true,
+//                                   hint: Padding(
+//                                     padding: const EdgeInsets.only(top: 0),
+//                                     child: Text(
+//                                       'Select Price Unit',
+//                                       style: TextStyle(
+//                                           color: Colors.grey[600],
+//                                           fontSize: 14),
+//                                     ),
+//                                   ),
+//                                   icon: Padding(
+//                                     padding:
+//                                         const EdgeInsets.only(right: 0, top: 5),
+//                                     child: Icon(
+//                                       // Add this
+//                                       Icons.arrow_drop_down, // Add this
+//                                       color: appColorBlack, // Add this
+//                                     ),
+//                                   ),
+//                                   onChanged: (String newValue) {
+//                                     setState(() {
+//                                       priceUnit = newValue;
+//                                       state.didChange(newValue);
+//                                     });
+//                                   },
+//                                   items: priceUnit2.map((item) {
+//                                     return new DropdownMenuItem(
+//                                       child: new Text(
+//                                         item,
+//                                         textAlign: TextAlign.center,
+//                                         style:
+//                                             TextStyle(color: Colors.grey[600]),
+//                                       ),
+//                                       value: item,
+//                                     );
+//                                   }).toList(),
+//                                 ),
+//                               ),
+//                             ),
+//                           ),
+//                         ],
+//                       ),
+//                     );
+//                   },
+//                 ),
+//               )
+//             ],
+//           );
+//   }
+
+//   Widget _productDesTextField() {
+//     return Column(
+//       crossAxisAlignment: CrossAxisAlignment.start,
+//       children: [
+//         RichText(
+//           text: TextSpan(
+//             text: 'Description',
+//             style: TextStyle(
+//                 color: Colors.grey[800],
+//                 fontFamily: fontFamily,
+//                 fontStyle: FontStyle.normal,
+//                 fontSize: SizeConfig.blockSizeHorizontal * 4),
+//             children: <TextSpan>[
+//               TextSpan(
+//                   text: ' *',
+//                   style: TextStyle(
+//                       fontWeight: FontWeight.bold, color: Colors.red)),
+//             ],
+//           ),
+//         ),
+//         // Container(
+//         //   height: 55,
+//         //   child: TextField(
+//         //     decoration: inputDecoration2,
+//         //   ),
+//         // ),
+//         SizedBox(
+//           height: 10,
+//         ),
+//         Container(
+//           height: SizeConfig.blockSizeVertical * 6,
+//           child: CupertinoTextField(
+//             controller: _decController,
+//             padding: EdgeInsets.only(left: 20),
+//             placeholder: 'Enter description',
+//             textAlign: TextAlign.start,
+//             placeholderStyle: TextStyle(
+//               fontSize: 14,
+//               color: Colors.grey[600],
+//             ),
+//             style: TextStyle(
+//               fontSize: 15,
+//               color: Colors.black,
+//               fontFamily: fontFamily,
+//             ),
+//             //maxLines: 2,
+//           ),
+//         ),
+//       ],
+//     );
+//   }
+
+//   Widget _priceField() {
+//     return Column(
+//       crossAxisAlignment: CrossAxisAlignment.start,
+//       children: [
+//         RichText(
+//           text: TextSpan(
+//             text: 'Price',
+//             style: TextStyle(
+//                 color: Colors.grey[800],
+//                 fontFamily: fontFamily,
+//                 fontStyle: FontStyle.normal,
+//                 fontSize: SizeConfig.blockSizeHorizontal * 4),
+//             children: <TextSpan>[
+//               TextSpan(
+//                   text: ' *',
+//                   style: TextStyle(
+//                       fontWeight: FontWeight.bold, color: Colors.red)),
+//             ],
+//           ),
+//         ),
+//         // Container(
+//         //   height: 55,
+//         //   child: TextField(
+//         //     decoration: inputDecoration2,
+//         //   ),
+//         // ),
+//         SizedBox(
+//           height: 10,
+//         ),
+//         Container(
+//           height: SizeConfig.blockSizeVertical * 6,
+//           child: CupertinoTextField(
+//             controller: _priceController,
+//             keyboardType: TextInputType.number,
+//             padding: EdgeInsets.only(left: 20),
+//             placeholder: 'Enter price',
+//             textAlign: TextAlign.start,
+//             placeholderStyle: TextStyle(
+//               fontSize: 14,
+//               color: Colors.grey[600],
+//             ),
+//             style: TextStyle(
+//               fontSize: 15,
+//               color: Colors.black,
+//               fontFamily: fontFamily,
+//             ),
+//             //maxLines: 2,
+//           ),
+//         ),
+//       ],
+//     );
+//   }
+
+//   Widget _salepriceField() {
+//     return Column(
+//       crossAxisAlignment: CrossAxisAlignment.start,
+//       children: [
+//         RichText(
+//           text: TextSpan(
+//             text: 'Durtion (hours)',
+//             style: TextStyle(
+//                 color: Colors.grey[800],
+//                 fontFamily: fontFamily,
+//                 fontStyle: FontStyle.normal,
+//                 fontSize: SizeConfig.blockSizeHorizontal * 4),
+//             children: <TextSpan>[
+//               TextSpan(
+//                   text: ' *',
+//                   style: TextStyle(
+//                       fontWeight: FontWeight.bold, color: Colors.red)),
+//             ],
+//           ),
+//         ),
+//         // Container(
+//         //   height: 55,
+//         //   child: TextField(
+//         //     decoration: inputDecoration2,
+//         //   ),
+//         // ),
+//         SizedBox(
+//           height: 10,
+//         ),
+//         Container(
+//           height: SizeConfig.blockSizeVertical * 6,
+//           child: CupertinoTextField(
+//             controller: _durationController,
+//             keyboardType: TextInputType.number,
+//             padding: EdgeInsets.only(left: 20),
+//             placeholder: 'Enter Durtion',
+//             textAlign: TextAlign.start,
+//             placeholderStyle: TextStyle(
+//               fontSize: 14,
+//               color: Colors.grey[600],
+//             ),
+//             style: TextStyle(
+//               fontSize: 15,
+//               color: Colors.black,
+//               fontFamily: fontFamily,
+//             ),
+//             //maxLines: 2,
+//           ),
+//         ),
+//       ],
+//     );
+//   }
+
+//   _apicall() async {
+//     setState(() {
+//       isOverlay = true;
+//     });
+//     var request = http.MultipartRequest(
+//         'POST', Uri.parse('${baseUrl()}/add_service_by_store_id'));
+
+//     request.fields.addAll({
+//       'v_id': userID,
+//       'cat_id': _categoryValue.toString(),
+//       'store_id': _storeValue.toString(),
+//       'service_name': _nameController.text,
+//       'service_price': _priceController.text,
+//       'service_description': _decController.text,
+//       'price_unit': priceUnit.toString(),
+//       'duration': _durationController.text,
+//     });
+
+//     final dir = await getTemporaryDirectory();
+//     final targetPath = dir.absolute.path +
+//         "/${DateTime.now().millisecondsSinceEpoch.toString()}.jpg";
+//     await FlutterImageCompress.compressAndGetFile(
+//       _image.absolute.path,
+//       targetPath,
+//       quality: 30,
+//     ).then((_image) async {
+//       String fileName = _image.path.split("/").last;
+//       var stream = new http.ByteStream(DelegatingStream(_image.openRead()));
+//       var length = await _image.length();
+//       var multipartFileSign = new http.MultipartFile(
+//           'service_image', stream, length,
+//           filename: fileName + ".jpeg");
+
+//       request.files.add(multipartFileSign);
+//     });
+//     var response = await request.send();
+
+//     print(request.fields);
+
+//     String responseData = await response.stream
+//         .transform(utf8.decoder)
+//         .join(); // decodes on response data using UTF8.decoder
+//     var data = json.decode(responseData);
+
+//     if (data["response_code"] == '1') {
+//       print(responseData);
+//       setState(() {
+//         isOverlay = false;
+//       });
+//       Fluttertoast.showToast(
+//           msg: data["message"],
+//           toastLength: Toast.LENGTH_SHORT,
+//           gravity: ToastGravity.CENTER,
+//           timeInSecForIosWeb: 1,
+//           backgroundColor: Colors.red,
+//           textColor: Colors.white,
+//           fontSize: 16.0);
+//       Navigator.of(context).pushAndRemoveUntil(
+//         MaterialPageRoute(
+//           builder: (context) => TabbarScreen(currentIndex: 0),
+//         ),
+//         (Route<dynamic> route) => false,
+//       );
+//     } else {
+//       Fluttertoast.showToast(
+//           msg: data["message"],
+//           toastLength: Toast.LENGTH_LONG,
+//           gravity: ToastGravity.CENTER,
+//           timeInSecForIosWeb: 1,
+//           backgroundColor: Colors.red,
+//           textColor: Colors.white,
+//           fontSize: 16.0);
+//     }
+
+//     setState(() {
+//       isOverlay = false;
+//     });
+//   }
+// }

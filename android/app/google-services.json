@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "887018040118",
+    "project_id": "soloadmin-73487",
+    "storage_bucket": "soloadmin-73487.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:887018040118:android:be90249c803aeddce72197",
+        "android_client_info": {
+          "package_name": "com.solovendor.solovendor"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "887018040118-9h1v550gmd4pke520e20jijgphjhparl.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.solovendor.solovendor",
+            "certificate_hash": "5c0f2c3139efb2a63785e3b3e5ba3ffd0db6947e"
+          }
+        },
+        {
+          "client_id": "887018040118-gave1klfd0pkr6olo7pgo8f7j8kfj9km.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDp1tgDr2MaZoXztZHhqw-HnJv35yVudGc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "887018040118-gave1klfd0pkr6olo7pgo8f7j8kfj9km.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
